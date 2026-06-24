@@ -1,9 +1,13 @@
 package com.example.pushkarskij.ui.viewmodels
 
-import androidx.lifecycle.ViewModel
+import android.app.Application
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import com.example.pushkarskij.utils.DataStoreManager
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.*
 
@@ -12,41 +16,27 @@ data class Habit(
     val name: String,
     val icon: String,
     val target: String,
-    val completedDates: List<Date> = emptyList()  // список дат выполнения
-) {
-    // Проверка, выполнена ли привычка в конкретный день
-    fun isCompletedOnDate(date: Date, dateFormat: SimpleDateFormat): Boolean {
-        val dateStr = dateFormat.format(date)
-        return completedDates.any { dateFormat.format(it) == dateStr }
-    }
-}
+    val completedDates: List<Date> = emptyList()
+)
 
-// Класс для хранения статистики привычки
 data class HabitStats(
     val habitId: Int,
-    val completedDays: Int,  // количество уникальных дней выполнения
-    val percentage: Int      // процент выполнения (из 7 дней)
+    val completedDays: Int,
+    val percentage: Int
 )
 
-// Класс для хранения дневной статистики
 data class DailyProgress(
     val date: Date,
-    val dateString: String,   // для отображения "24.06.2026"
-    val completedCount: Int,  // сколько привычек выполнено в этот день
-    val totalHabits: Int      // всего привычек
+    val dateString: String,
+    val completedCount: Int,
+    val totalHabits: Int
 )
 
-class HabitViewModel : ViewModel() {
+class HabitViewModel(application: Application) : AndroidViewModel(application) {
 
-    private val _habits = MutableStateFlow<List<Habit>>(
-        listOf(
-            Habit(1, "Выпить воду", "💧", "8 стаканов", getInitialDates(0)),
-            Habit(2, "Утренняя зарядка", "💪", "15 минут", getInitialDates(0)),
-            Habit(3, "Чтение", "📚", "30 минут", getInitialDates(0)),
-            Habit(4, "Медитация", "🧘", "10 минут", getInitialDates(0)),
-            Habit(5, "Витамины", "💊", "1 раз", getInitialDates(0))
-        )
-    )
+    private val dataStoreManager = DataStoreManager(application)
+
+    private val _habits = MutableStateFlow<List<Habit>>(emptyList())
     val habits: StateFlow<List<Habit>> = _habits.asStateFlow()
 
     private val _todayProgress = MutableStateFlow(0)
@@ -55,39 +45,51 @@ class HabitViewModel : ViewModel() {
     private val _habitStatsMap = MutableStateFlow<Map<Int, HabitStats>>(emptyMap())
     val habitStats: StateFlow<Map<Int, HabitStats>> = _habitStatsMap.asStateFlow()
 
-    // Лучший день
     private val _bestDay = MutableStateFlow<DailyProgress?>(null)
     val bestDay: StateFlow<DailyProgress?> = _bestDay.asStateFlow()
 
-    // Формат для сравнения дат
     private val dateFormat = SimpleDateFormat("yyyyMMdd", Locale.getDefault())
     private val displayDateFormat = SimpleDateFormat("dd.MM.yyyy", Locale.getDefault())
     private val today = Date()
 
     init {
-        updateProgress()
-        updateAllStats()
-        calculateBestDay()
+        loadDataFromStorage()
     }
 
-    // Создание начальных дат для демонстрации
-    private fun getInitialDates(count: Int): List<Date> {
-        val dates = mutableListOf<Date>()
-        val calendar = Calendar.getInstance()
-        for (i in 0 until count) {
-            calendar.add(Calendar.DAY_OF_YEAR, -1)
-            dates.add(calendar.time)
+    private fun loadDataFromStorage() {
+        viewModelScope.launch {
+            dataStoreManager.loadAllData().collect { (habits, settings) ->
+                _habits.value = habits
+                updateProgress()
+                updateAllStats()
+                calculateBestDay()
+            }
         }
-        return dates.reversed()
     }
 
-    // Проверка, выполнена ли привычка сегодня
+    private fun saveData() {
+        viewModelScope.launch {
+            // Настройки сохраняются отдельно через MainActivity
+        }
+    }
+
+    fun saveHabitsToStorage() {
+        viewModelScope.launch {
+            dataStoreManager.saveAllData(
+                habits = _habits.value,
+                isDarkTheme = false,  // будет перезаписано в MainActivity
+                remindersEnabled = true,
+                reminderTime = "09:00"
+            )
+        }
+    }
+
+
     fun isCompletedToday(habit: Habit): Boolean {
         val todayStr = dateFormat.format(today)
         return habit.completedDates.any { dateFormat.format(it) == todayStr }
     }
 
-    // Добавление сегодняшней даты
     private fun addTodayDate(dates: List<Date>): List<Date> {
         val todayStr = dateFormat.format(today)
         if (dates.any { dateFormat.format(it) == todayStr }) {
@@ -96,12 +98,10 @@ class HabitViewModel : ViewModel() {
         return dates + today
     }
 
-    // Удаление сегодняшней даты
     private fun removeTodayDate(dates: List<Date>): List<Date> {
         return dates.filter { dateFormat.format(it) != dateFormat.format(today) }
     }
 
-    // Подсчёт уникальных дней
     private fun countUniqueDays(dates: List<Date>): Int {
         return dates.map { dateFormat.format(it) }.distinct().size
     }
@@ -109,7 +109,6 @@ class HabitViewModel : ViewModel() {
     fun toggleHabit(habitId: Int) {
         _habits.value = _habits.value.map { habit ->
             if (habit.id == habitId) {
-                // Если привычка уже выполнена сегодня — снимаем отметку
                 if (isCompletedToday(habit)) {
                     val newDates = removeTodayDate(habit.completedDates)
                     habit.copy(completedDates = newDates)
@@ -124,6 +123,7 @@ class HabitViewModel : ViewModel() {
         updateProgress()
         updateAllStats()
         calculateBestDay()
+        saveHabitsToStorage()
     }
 
     private fun updateProgress() {
@@ -135,12 +135,15 @@ class HabitViewModel : ViewModel() {
         val stats = _habits.value.associate { habit ->
             val days = countUniqueDays(habit.completedDates)
             val percentage = (days * 100 / 7).coerceAtMost(100)
-            habit.id to HabitStats(habitId = habit.id, completedDays = days, percentage = percentage)
+            habit.id to HabitStats(
+                habitId = habit.id,
+                completedDays = days,
+                percentage = percentage
+            )
         }
         _habitStatsMap.value = stats
     }
 
-    // Расчёт лучшего дня на основе ежедневного прогресса
     fun calculateBestDay() {
         val totalHabits = _habits.value.size
         if (totalHabits == 0) {
@@ -148,39 +151,42 @@ class HabitViewModel : ViewModel() {
             return
         }
 
-        // Собираем все даты, когда были выполнены привычки
-        val allDates = mutableMapOf<String, MutableList<Date>>()
+        val allDates = mutableMapOf<String, MutableList<Int>>()
         _habits.value.forEach { habit ->
             habit.completedDates.forEach { date ->
                 val dateStr = dateFormat.format(date)
                 if (!allDates.containsKey(dateStr)) {
                     allDates[dateStr] = mutableListOf()
                 }
-                allDates[dateStr]?.add(date)
+                allDates[dateStr]?.add(habit.id)
             }
         }
 
-        // Находим день с максимальным количеством выполненных привычек
+        if (allDates.isEmpty()) {
+            _bestDay.value = null
+            return
+        }
+
         var bestDayDate: Date? = null
         var bestDayCount = 0
 
-        allDates.forEach { (dateStr, dates) ->
-            // Количество уникальных привычек, выполненных в этот день
-            val uniqueHabits = dates.map { date ->
-                _habits.value.find { habit ->
-                    habit.completedDates.any { dateFormat.format(it) == dateStr }
-                }
-            }.distinct().count()
-
+        allDates.forEach { (dateStr, habitIds) ->
+            val uniqueHabits = habitIds.distinct().size
             if (uniqueHabits > bestDayCount) {
                 bestDayCount = uniqueHabits
-                bestDayDate = dates.firstOrNull()
+                _habits.value.forEach { habit ->
+                    habit.completedDates.forEach { date ->
+                        if (dateFormat.format(date) == dateStr) {
+                            bestDayDate = date
+                        }
+                    }
+                }
             }
         }
 
         if (bestDayDate != null && bestDayCount > 0) {
             _bestDay.value = DailyProgress(
-                date = bestDayDate!!,  // ← !! означает "я уверен, что не null"
+                date = bestDayDate!!,
                 dateString = displayDateFormat.format(bestDayDate),
                 completedCount = bestDayCount,
                 totalHabits = totalHabits
@@ -203,6 +209,7 @@ class HabitViewModel : ViewModel() {
         updateAllStats()
         updateProgress()
         calculateBestDay()
+        saveHabitsToStorage()
     }
 
     fun deleteHabit(habitId: Int) {
@@ -210,11 +217,12 @@ class HabitViewModel : ViewModel() {
         _habitStatsMap.value = _habitStatsMap.value.filterKeys { it != habitId }
         updateProgress()
         calculateBestDay()
+        saveHabitsToStorage()
     }
 
-    // Вспомогательная функция для склонения слов
     fun getDeclension(count: Int, word: String): String {
-        return when (word) { "привычка" -> {
+        return when (word) {
+            "привычка" -> {
                 when {
                     count % 10 == 1 && count % 100 != 11 -> "$count привычка"
                     count % 10 in 2..4 && count % 100 !in 12..14 -> "$count привычки"
