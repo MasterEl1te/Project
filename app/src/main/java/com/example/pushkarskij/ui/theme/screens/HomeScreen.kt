@@ -73,16 +73,10 @@ fun HomeScreen(
                 .padding(innerPadding)
                 .padding(16.dp)
         ) {
-            // Дата
-            Text(
-                text = currentDate,
-                fontSize = 14.sp,
-                color = Color.Gray
-            )
+            Text(currentDate, fontSize = 14.sp, color = Color.Gray)
 
             Spacer(modifier = Modifier.height(16.dp))
 
-            // Карточка прогресса
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -130,7 +124,7 @@ fun HomeScreen(
                 items(habits) { habit ->
                     HabitCard(
                         habit = habit,
-                        onToggle = { viewModel.toggleHabit(habit.id) }
+                        viewModel = viewModel
                     )
                 }
             }
@@ -143,8 +137,9 @@ fun HomeScreen(
 @Composable
 fun HabitCard(
     habit: Habit,
-    onToggle: () -> Unit
+    viewModel: HabitViewModel
 ) {
+    val isCompletedToday = viewModel.isCompletedToday(habit)
 
     Card(
         modifier = Modifier
@@ -170,10 +165,10 @@ fun HabitCard(
                     Text(habit.target, fontSize = 12.sp, color = Color.Gray)
                 }
             }
-            
+
             Checkbox(
-                checked = habit.isCompleted,
-                onCheckedChange = { onToggle() },
+                checked = isCompletedToday,
+                onCheckedChange = { viewModel.toggleHabit(habit.id) },
                 colors = CheckboxDefaults.colors(checkedColor = Color(0xFF4CAF50))
             )
         }
