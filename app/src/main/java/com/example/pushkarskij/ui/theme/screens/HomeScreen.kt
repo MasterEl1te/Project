@@ -42,10 +42,7 @@ fun HomeScreen(
             )
         },
         bottomBar = {
-            NavigationBar(
-                containerColor = Color.White,
-                tonalElevation = 8.dp
-            ) {
+            NavigationBar(containerColor = Color.White, tonalElevation = 8.dp) {
                 NavigationBarItem(
                     selected = true,
                     onClick = { },
@@ -68,19 +65,14 @@ fun HomeScreen(
         }
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp)
+            modifier = Modifier.fillMaxSize().padding(innerPadding).padding(16.dp)
         ) {
             Text(currentDate, fontSize = 14.sp, color = Color.Gray)
 
             Spacer(modifier = Modifier.height(16.dp))
 
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(4.dp, RoundedCornerShape(16.dp)),
+                modifier = Modifier.fillMaxWidth().shadow(4.dp, RoundedCornerShape(16.dp)),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(containerColor = Color(0xFF6200EE))
             ) {
@@ -94,9 +86,7 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     LinearProgressIndicator(
                         progress = if (totalHabits > 0) todayProgress.toFloat() / totalHabits else 0f,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(8.dp),
+                        modifier = Modifier.fillMaxWidth().height(8.dp),
                         color = Color(0xFF4CAF50),
                         trackColor = Color.White.copy(alpha = 0.3f)
                     )
@@ -142,15 +132,11 @@ fun HabitCard(
     val isCompletedToday = viewModel.isCompletedToday(habit)
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(2.dp, RoundedCornerShape(12.dp)),
+        modifier = Modifier.fillMaxWidth().shadow(2.dp, RoundedCornerShape(12.dp)),
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
