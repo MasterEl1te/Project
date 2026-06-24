@@ -5,9 +5,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.*
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
 import androidx.compose.runtime.collectAsState
-import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
@@ -16,6 +15,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pushkarskij.ui.viewmodels.HabitViewModel
+import androidx.compose.runtime.LaunchedEffect
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -26,6 +26,11 @@ fun StatisticsScreen(
 ) {
     val habits by viewModel.habits.collectAsState()
     val habitStats by viewModel.habitStats.collectAsState()
+    val bestDay by viewModel.bestDay.collectAsState()
+
+    LaunchedEffect(Unit) {
+        viewModel.calculateBestDay()
+    }
 
     Scaffold(
         topBar = {
@@ -69,6 +74,7 @@ fun StatisticsScreen(
                 .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Лучший день (на основе ежедневного прогресса)
             item {
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -77,17 +83,31 @@ fun StatisticsScreen(
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
                         Text("🏆 Лучший день", fontSize = 14.sp, color = Color.Gray)
-                        val bestHabit = habits.maxByOrNull { if (it.isCompleted) 1 else 0 }
-                        Text(
-                            "${bestHabit?.name ?: "Нет"} (${if (bestHabit?.isCompleted == true) 1 else 0} привычек)",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
-                            color = Color(0xFF4CAF50)
-                        )
+
+                        if (bestDay != null && bestDay!!.completedCount > 0) {
+                            Text(
+                                text = bestDay!!.dateString,
+                                fontSize = 18.sp,
+                                fontWeight = FontWeight.Bold,
+                                color = Color(0xFF4CAF50)
+                            )
+                            Text(
+                                text = "Выполнено ${viewModel.getDeclension(bestDay!!.completedCount, "привычка")} из ${bestDay!!.totalHabits}",
+                                fontSize = 14.sp,
+                                color = Color(0xFF333333)
+                            )
+                        } else {
+                            Text(
+                                text = "Нет данных",
+                                fontSize = 16.sp,
+                                color = Color.Gray
+                            )
+                        }
                     }
                 }
             }
 
+            // Заголовок
             item {
                 Text(
                     text = "ПРИВЫЧКИ",
@@ -97,9 +117,11 @@ fun StatisticsScreen(
                 )
             }
 
+            // Список привычек со статистикой
             items(habits) { habit ->
-                val completedDays = habitStats[habit.id] ?: 0
-                val percentage = (completedDays * 100 / 7).coerceAtMost(100)
+                val stats = habitStats[habit.id]
+                val completedDays = stats?.completedDays ?: 0
+                val percentage = stats?.percentage ?: 0
 
                 Card(
                     modifier = Modifier.fillMaxWidth(),
@@ -113,12 +135,15 @@ fun StatisticsScreen(
                             Text(habit.name, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                         }
                         Spacer(Modifier.height(8.dp))
+
                         Text(
-                            text = "Выполнено: $completedDays/7 дней",
+                            text = "Выполнено: ${viewModel.getDeclension(completedDays, "день")} из 7",
                             fontSize = 12.sp,
                             color = Color.Gray
                         )
+
                         Spacer(Modifier.height(4.dp))
+
                         LinearProgressIndicator(
                             progress = percentage / 100f,
                             modifier = Modifier
@@ -127,7 +152,9 @@ fun StatisticsScreen(
                             color = Color(0xFF4CAF50),
                             trackColor = Color(0xFFE0E0E0)
                         )
+
                         Spacer(Modifier.height(4.dp))
+
                         Text(
                             text = "$percentage%",
                             fontSize = 12.sp,
