@@ -10,7 +10,7 @@ data class Habit(
     val name: String,
     val icon: String,
     val target: String,
-    val isCompleted: Boolean = false
+    val isCompleted: Boolean = false  
 )
 
 class HabitViewModel : ViewModel() {
@@ -39,7 +39,7 @@ class HabitViewModel : ViewModel() {
     fun toggleHabit(habitId: Int) {
         _habits.value = _habits.value.map { habit ->
             if (habit.id == habitId) {
-                habit.copy(isCompleted = !habit.isCompleted)
+                habit.copy(isCompleted = !habit.isCompleted)  
             } else {
                 habit
             }
