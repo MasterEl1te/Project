@@ -23,13 +23,14 @@ import android.app.TimePickerDialog
 @Composable
 fun SettingsScreen(
     viewModel: HabitViewModel,
-    onNavigateToHome: () -> Unit,
-    onNavigateToStatistics: () -> Unit,
     isDarkTheme: Boolean,
-    onThemeChange: (Boolean) -> Unit
+    onThemeChange: (Boolean) -> Unit,
+    onNavigateToHome: () -> Unit,
+    onNavigateToStatistics: () -> Unit
 ) {
     val context = LocalContext.current
     val habits by viewModel.habits.collectAsState()
+
     var showDialog by remember { mutableStateOf(false) }
     var newHabitName by remember { mutableStateOf("") }
     var newHabitTarget by remember { mutableStateOf("") }
@@ -42,10 +43,7 @@ fun SettingsScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = "УПРАВЛЕНИЕ",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
+                    Text(text = "УПРАВЛЕНИЕ", fontSize = 20.sp, fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                 },
@@ -99,10 +97,7 @@ fun SettingsScreen(
         }
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp),
+            modifier = Modifier.fillMaxSize().padding(innerPadding).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
@@ -172,7 +167,9 @@ fun SettingsScreen(
                     value = if (isDarkTheme) "Включено" else "Выключено",
                     isSwitch = true,
                     switchState = isDarkTheme,
-                    onToggle = { onThemeChange(!isDarkTheme) },
+                    onToggle = {
+                        onThemeChange(!isDarkTheme)
+                    },
                     isDarkTheme = isDarkTheme
                 )
             }
@@ -316,18 +313,14 @@ fun SettingsItem(
     isDarkTheme: Boolean
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(1.dp, RoundedCornerShape(12.dp)),
+        modifier = Modifier.fillMaxWidth().shadow(1.dp, RoundedCornerShape(12.dp)),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isDarkTheme) Color(0xFF252540) else Color.White
         )
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
