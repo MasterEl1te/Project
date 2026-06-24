@@ -40,11 +40,11 @@ class HabitViewModel : ViewModel() {
 
     private val _habits = MutableStateFlow<List<Habit>>(
         listOf(
-            Habit(1, "Выпить воду", "💧", "8 стаканов", getInitialDates(6)),
-            Habit(2, "Утренняя зарядка", "💪", "15 минут", getInitialDates(4)),
-            Habit(3, "Чтение", "📚", "30 минут", getInitialDates(5)),
-            Habit(4, "Медитация", "🧘", "10 минут", getInitialDates(3)),
-            Habit(5, "Витамины", "💊", "1 раз", getInitialDates(7))
+            Habit(1, "Выпить воду", "💧", "8 стаканов", getInitialDates(0)),
+            Habit(2, "Утренняя зарядка", "💪", "15 минут", getInitialDates(0)),
+            Habit(3, "Чтение", "📚", "30 минут", getInitialDates(0)),
+            Habit(4, "Медитация", "🧘", "10 минут", getInitialDates(0)),
+            Habit(5, "Витамины", "💊", "1 раз", getInitialDates(0))
         )
     )
     val habits: StateFlow<List<Habit>> = _habits.asStateFlow()
@@ -135,11 +135,7 @@ class HabitViewModel : ViewModel() {
         val stats = _habits.value.associate { habit ->
             val days = countUniqueDays(habit.completedDates)
             val percentage = (days * 100 / 7).coerceAtMost(100)
-            habit.id to HabitStats(
-                habitId = habit.id,
-                completedDays = days,
-                percentage = percentage
-            )
+            habit.id to HabitStats(habitId = habit.id, completedDays = days, percentage = percentage)
         }
         _habitStatsMap.value = stats
     }
@@ -181,7 +177,7 @@ class HabitViewModel : ViewModel() {
                 bestDayDate = dates.firstOrNull()
             }
         }
-        
+
         if (bestDayDate != null && bestDayCount > 0) {
             _bestDay.value = DailyProgress(
                 date = bestDayDate!!,  // ← !! означает "я уверен, что не null"
@@ -218,8 +214,7 @@ class HabitViewModel : ViewModel() {
 
     // Вспомогательная функция для склонения слов
     fun getDeclension(count: Int, word: String): String {
-        return when (word) {
-            "привычка" -> {
+        return when (word) { "привычка" -> {
                 when {
                     count % 10 == 1 && count % 100 != 11 -> "$count привычка"
                     count % 10 in 2..4 && count % 100 !in 12..14 -> "$count привычки"
