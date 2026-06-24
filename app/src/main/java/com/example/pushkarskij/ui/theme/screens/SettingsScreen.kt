@@ -24,7 +24,9 @@ import android.app.TimePickerDialog
 fun SettingsScreen(
     viewModel: HabitViewModel,
     onNavigateToHome: () -> Unit,
-    onNavigateToStatistics: () -> Unit
+    onNavigateToStatistics: () -> Unit,
+    isDarkTheme: Boolean,
+    onThemeChange: (Boolean) -> Unit
 ) {
     val context = LocalContext.current
     val habits by viewModel.habits.collectAsState()
@@ -39,97 +41,139 @@ fun SettingsScreen(
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("УПРАВЛЕНИЕ", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+                title = {
+                    Text(
+                        text = "УПРАВЛЕНИЕ",
+                        fontSize = 20.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                },
                 colors = TopAppBarDefaults.smallTopAppBarColors(
-                    containerColor = Color(0xFF6200EE)
+                    containerColor = if (isDarkTheme) Color(0xFF1A237E) else Color(0xFF6200EE)
                 )
             )
         },
         bottomBar = {
             NavigationBar(
-                containerColor = Color.White,
+                containerColor = if (isDarkTheme) Color(0xFF1A1A2E) else Color(0xFFE8E8E8),
                 tonalElevation = 8.dp
             ) {
                 NavigationBarItem(
                     selected = false,
                     onClick = onNavigateToHome,
                     icon = { Text("🏠", fontSize = 24.sp) },
-                    label = { Text("Главная", fontSize = 10.sp) }
+                    label = { Text("Главная", fontSize = 10.sp) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF6200EE),
+                        selectedTextColor = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF6200EE),
+                        unselectedIconColor = if (isDarkTheme) Color(0xFF666666) else Color(0xFF888888),
+                        unselectedTextColor = if (isDarkTheme) Color(0xFF666666) else Color(0xFF888888)
+                    )
                 )
                 NavigationBarItem(
                     selected = false,
                     onClick = onNavigateToStatistics,
                     icon = { Text("📊", fontSize = 24.sp) },
-                    label = { Text("Статистика", fontSize = 10.sp) }
+                    label = { Text("Статистика", fontSize = 10.sp) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF6200EE),
+                        selectedTextColor = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF6200EE),
+                        unselectedIconColor = if (isDarkTheme) Color(0xFF666666) else Color(0xFF888888),
+                        unselectedTextColor = if (isDarkTheme) Color(0xFF666666) else Color(0xFF888888)
+                    )
                 )
                 NavigationBarItem(
                     selected = true,
                     onClick = { },
                     icon = { Text("⚙️", fontSize = 24.sp) },
-                    label = { Text("Настройки", fontSize = 10.sp) }
+                    label = { Text("Настройки", fontSize = 10.sp) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF6200EE),
+                        selectedTextColor = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF6200EE),
+                        unselectedIconColor = if (isDarkTheme) Color(0xFF666666) else Color(0xFF888888),
+                        unselectedTextColor = if (isDarkTheme) Color(0xFF666666) else Color(0xFF888888)
+                    )
                 )
             }
         }
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier.fillMaxSize().padding(innerPadding).padding(16.dp),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
-            // Мои привычки
             item {
                 Text(
                     text = "МОИ ПРИВЫЧКИ",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF6200EE)
+                    color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF6200EE)
                 )
             }
 
-            items(habits) { habit -> ManageHabitCard(habit = habit, onDelete = { viewModel.deleteHabit(habit.id) }
+            items(habits) { habit ->
+                ManageHabitCard(
+                    habit = habit,
+                    onDelete = { viewModel.deleteHabit(habit.id) },
+                    isDarkTheme = isDarkTheme
                 )
             }
 
-            // Кнопка добавления привычки
             item {
                 Button(
                     onClick = { showDialog = true },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(12.dp),
-                    colors = ButtonDefaults.buttonColors(containerColor = Color(0xFF6200EE))
+                    colors = ButtonDefaults.buttonColors(
+                        containerColor = if (isDarkTheme) Color(0xFF1A237E) else Color(0xFF6200EE)
+                    )
                 ) {
                     Text("+ ДОБАВИТЬ НОВУЮ ПРИВЫЧКУ", fontSize = 14.sp)
                 }
             }
 
-            // Настройки
             item {
                 Text(
                     text = "НАСТРОЙКИ",
                     fontSize = 16.sp,
                     fontWeight = FontWeight.Bold,
-                    color = Color(0xFF6200EE),
+                    color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF6200EE),
                     modifier = Modifier.padding(top = 16.dp)
                 )
             }
 
-            // Напоминания (Switch)
             item {
                 SettingsItem(
                     title = "Напоминания",
                     value = if (remindersEnabled) "Включено" else "Выключено",
                     isSwitch = true,
                     switchState = remindersEnabled,
-                    onToggle = { remindersEnabled = !remindersEnabled }
+                    onToggle = { remindersEnabled = !remindersEnabled },
+                    isDarkTheme = isDarkTheme
                 )
             }
 
-            // Время напоминания (с возможностью выбора времени)
             item {
                 SettingsItem(
                     title = "Время напоминания",
                     value = reminderTime,
                     isTimePicker = true,
-                    onTimeClick = { showTimePicker = true }
+                    onTimeClick = { showTimePicker = true },
+                    isDarkTheme = isDarkTheme
+                )
+            }
+
+            item {
+                SettingsItem(
+                    title = "Тёмная тема",
+                    value = if (isDarkTheme) "Включено" else "Выключено",
+                    isSwitch = true,
+                    switchState = isDarkTheme,
+                    onToggle = { onThemeChange(!isDarkTheme) },
+                    isDarkTheme = isDarkTheme
                 )
             }
 
@@ -139,21 +183,25 @@ fun SettingsScreen(
         }
     }
 
-    // Диалог добавления привычки
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
-            title = { Text("Новая привычка") },
+            title = {
+                Text(
+                    text = "Новая привычка",
+                    color = if (isDarkTheme) Color.White else Color.Black
+                )
+            },
             text = {
                 Column {
-                    OutlinedTextField(
+                    TextField(
                         value = newHabitName,
                         onValueChange = { newHabitName = it },
                         label = { Text("Название привычки") },
                         modifier = Modifier.fillMaxWidth()
                     )
                     Spacer(Modifier.height(8.dp))
-                    OutlinedTextField(
+                    TextField(
                         value = newHabitTarget,
                         onValueChange = { newHabitTarget = it },
                         label = { Text("Цель (например: 8 стаканов)") },
@@ -172,27 +220,32 @@ fun SettingsScreen(
                         }
                     }
                 ) {
-                    Text("Добавить")
+                    Text("Добавить", color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF6200EE))
                 }
             },
             dismissButton = {
                 TextButton(onClick = { showDialog = false }) {
-                    Text("Отмена")
+                    Text("Отмена", color = if (isDarkTheme) Color(0xFFB0B0B0) else Color.Gray)
                 }
             }
         )
     }
 
-    // Диалог выбора времени
     if (showTimePicker) {
         val currentParts = reminderTime.split(":")
         val currentHour = currentParts[0].toIntOrNull() ?: 9
         val currentMinute = currentParts[1].toIntOrNull() ?: 0
 
-        TimePickerDialog(context, { _, hourOfDay, minute ->
+        TimePickerDialog(
+            context,
+            { _, hourOfDay, minute ->
                 reminderTime = String.format("%02d:%02d", hourOfDay, minute)
                 showTimePicker = false
-            }, currentHour, currentMinute, true).apply {
+            },
+            currentHour,
+            currentMinute,
+            true
+        ).apply {
             setTitle("Выберите время напоминания")
             show()
         }
@@ -203,14 +256,22 @@ fun SettingsScreen(
 @Composable
 fun ManageHabitCard(
     habit: com.example.pushkarskij.ui.viewmodels.Habit,
-    onDelete: () -> Unit
+    onDelete: () -> Unit,
+    isDarkTheme: Boolean
 ) {
     Card(
-        modifier = Modifier.fillMaxWidth().shadow(2.dp, RoundedCornerShape(12.dp)),
-        shape = RoundedCornerShape(12.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(2.dp, RoundedCornerShape(12.dp)),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isDarkTheme) Color(0xFF252540) else Color.White
+        )
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -218,13 +279,24 @@ fun ManageHabitCard(
                 Text(habit.icon, fontSize = 24.sp)
                 Spacer(Modifier.width(12.dp))
                 Column {
-                    Text(habit.name, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    Text(habit.target, fontSize = 12.sp, color = Color.Gray)
+                    Text(
+                        text = habit.name,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDarkTheme) Color.White else Color.Black
+                    )
+                    Text(
+                        text = habit.target,
+                        fontSize = 12.sp,
+                        color = if (isDarkTheme) Color(0xFFB0B0B0) else Color.Gray
+                    )
                 }
             }
             TextButton(
                 onClick = onDelete,
-                colors = ButtonDefaults.textButtonColors(contentColor = Color.Red)
+                colors = ButtonDefaults.textButtonColors(
+                    contentColor = if (isDarkTheme) Color(0xFFFF6B6B) else Color.Red
+                )
             ) {
                 Text("Удалить")
             }
@@ -233,29 +305,65 @@ fun ManageHabitCard(
 }
 
 @Composable
-fun SettingsItem(title: String, value: String, isSwitch: Boolean = false, isTimePicker: Boolean = false, switchState: Boolean = false,
-    onToggle: (() -> Unit)? = null, onTimeClick: (() -> Unit)? = null) {
+fun SettingsItem(
+    title: String,
+    value: String,
+    isSwitch: Boolean = false,
+    isTimePicker: Boolean = false,
+    switchState: Boolean = false,
+    onToggle: (() -> Unit)? = null,
+    onTimeClick: (() -> Unit)? = null,
+    isDarkTheme: Boolean
+) {
     Card(
-        modifier = Modifier.fillMaxWidth().shadow(1.dp, RoundedCornerShape(12.dp)),
-        shape = RoundedCornerShape(12.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(1.dp, RoundedCornerShape(12.dp)),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isDarkTheme) Color(0xFF252540) else Color.White
+        )
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
-            Text(title, fontSize = 16.sp)
+            Text(
+                text = title,
+                fontSize = 16.sp,
+                color = if (isDarkTheme) Color.White else Color.Black
+            )
 
             when {
                 isSwitch -> {
-                    Switch(checked = switchState, onCheckedChange = { onToggle?.invoke() }, colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF6200EE))
+                    Switch(
+                        checked = switchState,
+                        onCheckedChange = { onToggle?.invoke() },
+                        colors = SwitchDefaults.colors(
+                            checkedThumbColor = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF6200EE),
+                            checkedTrackColor = if (isDarkTheme) Color(0xFF3A3A5A) else Color(0xFFD0BCFF),
+                            uncheckedThumbColor = if (isDarkTheme) Color(0xFF888888) else Color(0xFF9E9E9E)
+                        )
                     )
                 }
                 isTimePicker -> {
-                    Text(text = value, fontSize = 16.sp, color = Color(0xFF6200EE), fontWeight = FontWeight.Bold, modifier = Modifier.clickable { onTimeClick?.invoke() })
+                    Text(
+                        text = value,
+                        fontSize = 16.sp,
+                        color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF6200EE),
+                        fontWeight = FontWeight.Bold,
+                        modifier = Modifier.clickable { onTimeClick?.invoke() }
+                    )
                 }
                 else -> {
-                    Text(text = value, fontSize = 14.sp, color = Color.Gray)
+                    Text(
+                        text = value,
+                        fontSize = 14.sp,
+                        color = if (isDarkTheme) Color(0xFFB0B0B0) else Color.Gray
+                    )
                 }
             }
         }
