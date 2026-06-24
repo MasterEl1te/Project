@@ -20,14 +20,13 @@ import com.example.pushkarskij.ui.viewmodels.HabitViewModel
 @Composable
 fun StatisticsScreen(
     viewModel: HabitViewModel,
+    isDarkTheme: Boolean,
     onNavigateToHome: () -> Unit,
     onNavigateToSettings: () -> Unit
 ) {
     val habits by viewModel.habits.collectAsState()
     val habitStats by viewModel.habitStats.collectAsState()
     val bestDay by viewModel.bestDay.collectAsState()
-
-    val isDarkTheme = MaterialTheme.colorScheme.background == Color(0xFF0D0D1A)
 
     LaunchedEffect(Unit) {
         viewModel.calculateBestDay()
@@ -37,10 +36,7 @@ fun StatisticsScreen(
         topBar = {
             TopAppBar(
                 title = {
-                    Text(
-                        text = "СТАТИСТИКА",
-                        fontSize = 20.sp,
-                        fontWeight = FontWeight.Bold,
+                    Text(text = "СТАТИСТИКА", fontSize = 20.sp, fontWeight = FontWeight.Bold,
                         color = Color.White
                     )
                 },
@@ -94,10 +90,7 @@ fun StatisticsScreen(
         }
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp),
+            modifier = Modifier.fillMaxSize().padding(innerPadding).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
             item {
@@ -109,28 +102,19 @@ fun StatisticsScreen(
                     )
                 ) {
                     Column(modifier = Modifier.padding(16.dp)) {
-                        Text(
-                            text = "🏆 Лучший день",
-                            fontSize = 14.sp,
+                        Text(text = "🏆 Лучший день", fontSize = 14.sp,
                             color = if (isDarkTheme) Color(0xFFB0B0B0) else Color.Gray
                         )
 
                         if (bestDay != null && bestDay!!.completedCount > 0) {
-                            Text(
-                                text = bestDay!!.dateString,
-                                fontSize = 18.sp,
-                                fontWeight = FontWeight.Bold,
+                            Text(text = bestDay!!.dateString, fontSize = 18.sp, fontWeight = FontWeight.Bold,
                                 color = Color(0xFF4CAF50)
                             )
-                            Text(
-                                text = "Выполнено ${viewModel.getDeclension(bestDay!!.completedCount, "привычка")} из ${bestDay!!.totalHabits}",
-                                fontSize = 14.sp,
+                            Text(text = "Выполнено ${viewModel.getDeclension(bestDay!!.completedCount, "привычка")} из ${bestDay!!.totalHabits}", fontSize = 14.sp,
                                 color = if (isDarkTheme) Color(0xFFB0B0B0) else Color(0xFF333333)
                             )
                         } else {
-                            Text(
-                                text = "Нет данных",
-                                fontSize = 16.sp,
+                            Text(text = "Нет данных", fontSize = 16.sp,
                                 color = if (isDarkTheme) Color(0xFF666666) else Color.Gray
                             )
                         }
@@ -139,10 +123,7 @@ fun StatisticsScreen(
             }
 
             item {
-                Text(
-                    text = "ПРИВЫЧКИ",
-                    fontSize = 16.sp,
-                    fontWeight = FontWeight.Bold,
+                Text(text = "ПРИВЫЧКИ", fontSize = 16.sp, fontWeight = FontWeight.Bold,
                     color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF6200EE)
                 )
             }
@@ -163,33 +144,23 @@ fun StatisticsScreen(
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Text(habit.icon, fontSize = 24.sp)
                             Spacer(Modifier.width(12.dp))
-                            Text(
-                                text = habit.name,
-                                fontSize = 16.sp,
-                                fontWeight = FontWeight.Bold,
+                            Text(text = habit.name, fontSize = 16.sp, fontWeight = FontWeight.Bold,
                                 color = if (isDarkTheme) Color.White else Color.Black
                             )
                         }
                         Spacer(Modifier.height(8.dp))
-                        Text(
-                            text = "Выполнено: ${viewModel.getDeclension(completedDays, "день")} из 7",
-                            fontSize = 12.sp,
+                        Text(text = "Выполнено: ${viewModel.getDeclension(completedDays, "день")} из 7", fontSize = 12.sp,
                             color = if (isDarkTheme) Color(0xFFB0B0B0) else Color.Gray
                         )
                         Spacer(Modifier.height(4.dp))
                         LinearProgressIndicator(
                             progress = percentage / 100f,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(6.dp),
+                            modifier = Modifier.fillMaxWidth().height(6.dp),
                             color = Color(0xFF4CAF50),
                             trackColor = if (isDarkTheme) Color(0xFF3A3A5A) else Color(0xFFE0E0E0)
                         )
                         Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = "$percentage%",
-                            fontSize = 12.sp,
-                            fontWeight = FontWeight.Bold,
+                        Text(text = "$percentage%", fontSize = 12.sp, fontWeight = FontWeight.Bold,
                             color = Color(0xFF4CAF50)
                         )
                     }
