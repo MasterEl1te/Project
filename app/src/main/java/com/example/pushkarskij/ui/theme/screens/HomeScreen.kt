@@ -73,10 +73,16 @@ fun HomeScreen(
                 .padding(innerPadding)
                 .padding(16.dp)
         ) {
-            Text(currentDate, fontSize = 14.sp, color = Color.Gray)
+            // Дата
+            Text(
+                text = currentDate,
+                fontSize = 14.sp,
+                color = Color.Gray
+            )
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Карточка прогресса
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -122,7 +128,10 @@ fun HomeScreen(
 
             LazyColumn(verticalArrangement = Arrangement.spacedBy(12.dp)) {
                 items(habits) { habit ->
-                    HabitCard(habit = habit, onToggle = { viewModel.toggleHabit(habit.id) })
+                    HabitCard(
+                        habit = habit,
+                        onToggle = { viewModel.toggleHabit(habit.id) }
+                    )
                 }
             }
 
@@ -132,8 +141,10 @@ fun HomeScreen(
 }
 
 @Composable
-fun HabitCard(habit: Habit, onToggle: () -> Unit) {
-    var isChecked by remember { mutableStateOf(false) }
+fun HabitCard(
+    habit: Habit,
+    onToggle: () -> Unit
+) {
 
     Card(
         modifier = Modifier
@@ -159,12 +170,10 @@ fun HabitCard(habit: Habit, onToggle: () -> Unit) {
                     Text(habit.target, fontSize = 12.sp, color = Color.Gray)
                 }
             }
+            
             Checkbox(
-                checked = isChecked,
-                onCheckedChange = {
-                    isChecked = it
-                    onToggle()
-                },
+                checked = habit.isCompleted,
+                onCheckedChange = { onToggle() },
                 colors = CheckboxDefaults.colors(checkedColor = Color(0xFF4CAF50))
             )
         }
