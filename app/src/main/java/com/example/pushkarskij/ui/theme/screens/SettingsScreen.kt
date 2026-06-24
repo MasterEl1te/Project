@@ -1,5 +1,6 @@
 package com.example.pushkarskij.ui.screens
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -11,10 +12,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.example.pushkarskij.ui.viewmodels.HabitViewModel
+import android.app.TimePickerDialog
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -23,6 +26,7 @@ fun SettingsScreen(
     onNavigateToHome: () -> Unit,
     onNavigateToStatistics: () -> Unit
 ) {
+    val context = LocalContext.current
     val habits by viewModel.habits.collectAsState()
     var showDialog by remember { mutableStateOf(false) }
     var newHabitName by remember { mutableStateOf("") }
@@ -30,7 +34,7 @@ fun SettingsScreen(
 
     var remindersEnabled by remember { mutableStateOf(true) }
     var reminderTime by remember { mutableStateOf("09:00") }
-    var darkThemeEnabled by remember { mutableStateOf(false) }
+    var showTimePicker by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -68,12 +72,10 @@ fun SettingsScreen(
         }
     ) { innerPadding ->
         LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp),
+            modifier = Modifier.fillMaxSize().padding(innerPadding).padding(16.dp),
             verticalArrangement = Arrangement.spacedBy(16.dp)
         ) {
+            // Мои привычки
             item {
                 Text(
                     text = "МОИ ПРИВЫЧКИ",
@@ -83,10 +85,11 @@ fun SettingsScreen(
                 )
             }
 
-            items(habits) { habit ->
-                ManageHabitCard(habit = habit, onDelete = { viewModel.deleteHabit(habit.id) })
+            items(habits) { habit -> ManageHabitCard(habit = habit, onDelete = { viewModel.deleteHabit(habit.id) }
+                )
             }
 
+            // Кнопка добавления привычки
             item {
                 Button(
                     onClick = { showDialog = true },
@@ -98,6 +101,7 @@ fun SettingsScreen(
                 }
             }
 
+            // Настройки
             item {
                 Text(
                     text = "НАСТРОЙКИ",
@@ -108,6 +112,7 @@ fun SettingsScreen(
                 )
             }
 
+            // Напоминания (Switch)
             item {
                 SettingsItem(
                     title = "Напоминания",
@@ -117,20 +122,14 @@ fun SettingsScreen(
                     onToggle = { remindersEnabled = !remindersEnabled }
                 )
             }
+
+            // Время напоминания (с возможностью выбора времени)
             item {
                 SettingsItem(
                     title = "Время напоминания",
                     value = reminderTime,
-                    isTimePicker = true
-                )
-            }
-            item {
-                SettingsItem(
-                    title = "Тёмная тема",
-                    value = if (darkThemeEnabled) "Включено" else "Выключено",
-                    isSwitch = true,
-                    switchState = darkThemeEnabled,
-                    onToggle = { darkThemeEnabled = !darkThemeEnabled }
+                    isTimePicker = true,
+                    onTimeClick = { showTimePicker = true }
                 )
             }
 
@@ -140,6 +139,7 @@ fun SettingsScreen(
         }
     }
 
+    // Диалог добавления привычки
     if (showDialog) {
         AlertDialog(
             onDismissRequest = { showDialog = false },
@@ -182,6 +182,22 @@ fun SettingsScreen(
             }
         )
     }
+
+    // Диалог выбора времени
+    if (showTimePicker) {
+        val currentParts = reminderTime.split(":")
+        val currentHour = currentParts[0].toIntOrNull() ?: 9
+        val currentMinute = currentParts[1].toIntOrNull() ?: 0
+
+        TimePickerDialog(context, { _, hourOfDay, minute ->
+                reminderTime = String.format("%02d:%02d", hourOfDay, minute)
+                showTimePicker = false
+            }, currentHour, currentMinute, true).apply {
+            setTitle("Выберите время напоминания")
+            show()
+        }
+        showTimePicker = false
+    }
 }
 
 @Composable
@@ -190,15 +206,11 @@ fun ManageHabitCard(
     onDelete: () -> Unit
 ) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(2.dp, RoundedCornerShape(12.dp)),
+        modifier = Modifier.fillMaxWidth().shadow(2.dp, RoundedCornerShape(12.dp)),
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -221,38 +233,29 @@ fun ManageHabitCard(
 }
 
 @Composable
-fun SettingsItem(
-    title: String,
-    value: String,
-    isSwitch: Boolean = false,
-    isTimePicker: Boolean = false,
-    switchState: Boolean = false,
-    onToggle: (() -> Unit)? = null
-) {
+fun SettingsItem(title: String, value: String, isSwitch: Boolean = false, isTimePicker: Boolean = false, switchState: Boolean = false,
+    onToggle: (() -> Unit)? = null, onTimeClick: (() -> Unit)? = null) {
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(1.dp, RoundedCornerShape(12.dp)),
+        modifier = Modifier.fillMaxWidth().shadow(1.dp, RoundedCornerShape(12.dp)),
         shape = RoundedCornerShape(12.dp)
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
             Text(title, fontSize = 16.sp)
+
             when {
                 isSwitch -> {
-                    Switch(
-                        checked = switchState,
-                        onCheckedChange = { onToggle?.invoke() },
-                        colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF6200EE))
+                    Switch(checked = switchState, onCheckedChange = { onToggle?.invoke() }, colors = SwitchDefaults.colors(checkedThumbColor = Color(0xFF6200EE))
                     )
                 }
+                isTimePicker -> {
+                    Text(text = value, fontSize = 16.sp, color = Color(0xFF6200EE), fontWeight = FontWeight.Bold, modifier = Modifier.clickable { onTimeClick?.invoke() })
+                }
                 else -> {
-                    Text(value, fontSize = 14.sp, color = Color.Gray)
+                    Text(text = value, fontSize = 14.sp, color = Color.Gray)
                 }
             }
         }
