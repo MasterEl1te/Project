@@ -23,6 +23,7 @@ import java.util.*
 @Composable
 fun HomeScreen(
     viewModel: HabitViewModel,
+    isDarkTheme: Boolean,
     onNavigateToStatistics: () -> Unit,
     onNavigateToSettings: () -> Unit
 ) {
@@ -31,8 +32,6 @@ fun HomeScreen(
     val totalHabits = habits.size
     val dateFormat = SimpleDateFormat("d MMMM yyyy", Locale("ru"))
     val currentDate = dateFormat.format(Date())
-
-    val isDarkTheme = MaterialTheme.colorScheme.background == Color(0xFF0D0D1A)
 
     Scaffold(
         topBar = {
@@ -43,16 +42,10 @@ fun HomeScreen(
                         horizontalArrangement = Arrangement.SpaceBetween,
                         verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text(
-                            text = "МОЙ ДЕНЬ",
-                            fontSize = 20.sp,
-                            fontWeight = FontWeight.Bold,
+                        Text(text = "МОЙ ДЕНЬ", fontSize = 20.sp, fontWeight = FontWeight.Bold,
                             color = Color.White
                         )
-                        Text(
-                            text = currentDate,
-                            fontSize = 16.sp,
-                            fontWeight = FontWeight.SemiBold,
+                        Text(text = currentDate, fontSize = 16.sp, fontWeight = FontWeight.SemiBold,
                             color = Color.White.copy(alpha = 0.9f),
                             modifier = Modifier.padding(end = 16.dp)
                         )
@@ -108,17 +101,12 @@ fun HomeScreen(
         }
     ) { innerPadding ->
         Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(16.dp)
+            modifier = Modifier.fillMaxSize().padding(innerPadding).padding(16.dp)
         ) {
             Spacer(modifier = Modifier.height(8.dp))
 
             Card(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .shadow(4.dp, RoundedCornerShape(16.dp)),
+                modifier = Modifier.fillMaxWidth().shadow(4.dp, RoundedCornerShape(16.dp)),
                 shape = RoundedCornerShape(16.dp),
                 colors = CardDefaults.cardColors(
                     containerColor = if (isDarkTheme) Color(0xFF1A237E) else Color(0xFF6200EE)
@@ -134,9 +122,7 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     LinearProgressIndicator(
                         progress = if (totalHabits > 0) todayProgress.toFloat() / totalHabits else 0f,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .height(8.dp),
+                        modifier = Modifier.fillMaxWidth().height(8.dp),
                         color = Color(0xFF4CAF50),
                         trackColor = Color.White.copy(alpha = 0.3f)
                     )
@@ -184,18 +170,14 @@ fun HabitCard(
     val isCompletedToday = viewModel.isCompletedToday(habit)
 
     Card(
-        modifier = Modifier
-            .fillMaxWidth()
-            .shadow(2.dp, RoundedCornerShape(12.dp)),
+        modifier = Modifier.fillMaxWidth().shadow(2.dp, RoundedCornerShape(12.dp)),
         shape = RoundedCornerShape(12.dp),
         colors = CardDefaults.cardColors(
             containerColor = if (isDarkTheme) Color(0xFF252540) else Color.White
         )
     ) {
         Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(16.dp),
+            modifier = Modifier.fillMaxWidth().padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -206,15 +188,10 @@ fun HabitCard(
                 Text(habit.icon, fontSize = 28.sp)
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
-                    Text(
-                        text = habit.name,
-                        fontSize = 16.sp,
-                        fontWeight = FontWeight.Bold,
+                    Text(text = habit.name, fontSize = 16.sp, fontWeight = FontWeight.Bold,
                         color = if (isDarkTheme) Color.White else Color.Black
                     )
-                    Text(
-                        text = habit.target,
-                        fontSize = 12.sp,
+                    Text(text = habit.target, fontSize = 12.sp,
                         color = if (isDarkTheme) Color(0xFFB0B0B0) else Color.Gray
                     )
                 }
