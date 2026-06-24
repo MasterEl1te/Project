@@ -32,49 +32,97 @@ fun HomeScreen(
     val dateFormat = SimpleDateFormat("d MMMM yyyy", Locale("ru"))
     val currentDate = dateFormat.format(Date())
 
+    val isDarkTheme = MaterialTheme.colorScheme.background == Color(0xFF0D0D1A)
+
     Scaffold(
         topBar = {
             TopAppBar(
-                title = { Text("МОЙ ДЕНЬ", fontSize = 20.sp, fontWeight = FontWeight.Bold) },
+                title = {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Text(
+                            text = "МОЙ ДЕНЬ",
+                            fontSize = 20.sp,
+                            fontWeight = FontWeight.Bold,
+                            color = Color.White
+                        )
+                        Text(
+                            text = currentDate,
+                            fontSize = 16.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Color.White.copy(alpha = 0.9f),
+                            modifier = Modifier.padding(end = 16.dp)
+                        )
+                    }
+                },
                 colors = TopAppBarDefaults.smallTopAppBarColors(
-                    containerColor = Color(0xFF6200EE)
+                    containerColor = if (isDarkTheme) Color(0xFF1A237E) else Color(0xFF6200EE)
                 )
             )
         },
         bottomBar = {
-            NavigationBar(containerColor = Color.White, tonalElevation = 8.dp) {
+            NavigationBar(
+                containerColor = if (isDarkTheme) Color(0xFF1A1A2E) else Color(0xFFE8E8E8),
+                tonalElevation = 8.dp
+            ) {
                 NavigationBarItem(
                     selected = true,
                     onClick = { },
                     icon = { Text("🏠", fontSize = 24.sp) },
-                    label = { Text("Главная", fontSize = 10.sp) }
+                    label = { Text("Главная", fontSize = 10.sp) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF6200EE),
+                        selectedTextColor = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF6200EE),
+                        unselectedIconColor = if (isDarkTheme) Color(0xFF666666) else Color(0xFF888888),
+                        unselectedTextColor = if (isDarkTheme) Color(0xFF666666) else Color(0xFF888888)
+                    )
                 )
                 NavigationBarItem(
                     selected = false,
                     onClick = onNavigateToStatistics,
                     icon = { Text("📊", fontSize = 24.sp) },
-                    label = { Text("Статистика", fontSize = 10.sp) }
+                    label = { Text("Статистика", fontSize = 10.sp) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF6200EE),
+                        selectedTextColor = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF6200EE),
+                        unselectedIconColor = if (isDarkTheme) Color(0xFF666666) else Color(0xFF888888),
+                        unselectedTextColor = if (isDarkTheme) Color(0xFF666666) else Color(0xFF888888)
+                    )
                 )
                 NavigationBarItem(
                     selected = false,
                     onClick = onNavigateToSettings,
                     icon = { Text("⚙️", fontSize = 24.sp) },
-                    label = { Text("Настройки", fontSize = 10.sp) }
+                    label = { Text("Настройки", fontSize = 10.sp) },
+                    colors = NavigationBarItemDefaults.colors(
+                        selectedIconColor = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF6200EE),
+                        selectedTextColor = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF6200EE),
+                        unselectedIconColor = if (isDarkTheme) Color(0xFF666666) else Color(0xFF888888),
+                        unselectedTextColor = if (isDarkTheme) Color(0xFF666666) else Color(0xFF888888)
+                    )
                 )
             }
         }
     ) { innerPadding ->
         Column(
-            modifier = Modifier.fillMaxSize().padding(innerPadding).padding(16.dp)
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(innerPadding)
+                .padding(16.dp)
         ) {
-            Text(currentDate, fontSize = 14.sp, color = Color.Gray)
-
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(8.dp))
 
             Card(
-                modifier = Modifier.fillMaxWidth().shadow(4.dp, RoundedCornerShape(16.dp)),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .shadow(4.dp, RoundedCornerShape(16.dp)),
                 shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = Color(0xFF6200EE))
+                colors = CardDefaults.cardColors(
+                    containerColor = if (isDarkTheme) Color(0xFF1A237E) else Color(0xFF6200EE)
+                )
             ) {
                 Column(modifier = Modifier.padding(20.dp)) {
                     Text(
@@ -86,7 +134,9 @@ fun HomeScreen(
                     Spacer(modifier = Modifier.height(8.dp))
                     LinearProgressIndicator(
                         progress = if (totalHabits > 0) todayProgress.toFloat() / totalHabits else 0f,
-                        modifier = Modifier.fillMaxWidth().height(8.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .height(8.dp),
                         color = Color(0xFF4CAF50),
                         trackColor = Color.White.copy(alpha = 0.3f)
                     )
@@ -105,7 +155,7 @@ fun HomeScreen(
                 text = "ПРИВЫЧКИ НА СЕГОДНЯ",
                 fontSize = 16.sp,
                 fontWeight = FontWeight.Bold,
-                color = Color(0xFF6200EE)
+                color = if (isDarkTheme) Color(0xFF64B5F6) else Color(0xFF6200EE)
             )
 
             Spacer(modifier = Modifier.height(12.dp))
@@ -114,7 +164,8 @@ fun HomeScreen(
                 items(habits) { habit ->
                     HabitCard(
                         habit = habit,
-                        viewModel = viewModel
+                        viewModel = viewModel,
+                        isDarkTheme = isDarkTheme
                     )
                 }
             }
@@ -127,16 +178,24 @@ fun HomeScreen(
 @Composable
 fun HabitCard(
     habit: Habit,
-    viewModel: HabitViewModel
+    viewModel: HabitViewModel,
+    isDarkTheme: Boolean
 ) {
     val isCompletedToday = viewModel.isCompletedToday(habit)
 
     Card(
-        modifier = Modifier.fillMaxWidth().shadow(2.dp, RoundedCornerShape(12.dp)),
-        shape = RoundedCornerShape(12.dp)
+        modifier = Modifier
+            .fillMaxWidth()
+            .shadow(2.dp, RoundedCornerShape(12.dp)),
+        shape = RoundedCornerShape(12.dp),
+        colors = CardDefaults.cardColors(
+            containerColor = if (isDarkTheme) Color(0xFF252540) else Color.White
+        )
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(16.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(16.dp),
             horizontalArrangement = Arrangement.SpaceBetween,
             verticalAlignment = Alignment.CenterVertically
         ) {
@@ -147,8 +206,17 @@ fun HabitCard(
                 Text(habit.icon, fontSize = 28.sp)
                 Spacer(modifier = Modifier.width(12.dp))
                 Column {
-                    Text(habit.name, fontSize = 16.sp, fontWeight = FontWeight.Bold)
-                    Text(habit.target, fontSize = 12.sp, color = Color.Gray)
+                    Text(
+                        text = habit.name,
+                        fontSize = 16.sp,
+                        fontWeight = FontWeight.Bold,
+                        color = if (isDarkTheme) Color.White else Color.Black
+                    )
+                    Text(
+                        text = habit.target,
+                        fontSize = 12.sp,
+                        color = if (isDarkTheme) Color(0xFFB0B0B0) else Color.Gray
+                    )
                 }
             }
 
