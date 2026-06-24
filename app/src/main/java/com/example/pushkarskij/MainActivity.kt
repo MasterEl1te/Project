@@ -9,6 +9,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.compose.NavHost
@@ -21,65 +22,50 @@ import com.example.pushkarskij.ui.screens.StatisticsScreen
 import com.example.pushkarskij.ui.theme.MyApplicationTheme
 import com.example.pushkarskij.ui.viewmodels.HabitViewModel
 import com.example.pushkarskij.utils.DataStoreManager
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.runtime.DisposableEffect
-
+import androidx.compose.runtime.saveable.rememberSaveable
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+
+        // Загружаем тему ДО создания Compose
+        val dataStoreManager = DataStoreManager(this)
+        var savedTheme = false
+        runBlocking {
+            val data = dataStoreManager.loadAllData().first()
+            savedTheme = data.second.first
+        }
+        val initialTheme = savedTheme
+
         setContent {
-            MyApp()
+            MyApp(initialTheme = initialTheme)
         }
     }
 }
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun MyApp() {
+fun MyApp(initialTheme: Boolean) {
     val context = LocalContext.current
     val dataStoreManager = remember { DataStoreManager(context) }
-    val viewModel: HabitViewModel = viewModel()
+    val habitViewModel: HabitViewModel = viewModel()
+    val scope = rememberCoroutineScope()
 
-    var isDarkTheme by remember { mutableStateOf(false) }
-    var remindersEnabled by remember { mutableStateOf(true) }
-    var reminderTime by remember { mutableStateOf("09:00") }
-    var isDataLoaded by remember { mutableStateOf(false) }
+    var isDarkTheme by rememberSaveable { mutableStateOf(initialTheme) }
 
-    // Загрузка сохранённых настроек при запуске
-    LaunchedEffect(Unit) {
-        dataStoreManager.loadAllData().collect { (_, settings) ->
-            isDarkTheme = settings.first
-            remindersEnabled = settings.second
-            reminderTime = settings.third
-            isDataLoaded = true
-        }
-    }
-
-    // Сохранение настроек при изменении
-    fun saveSettings(dark: Boolean, reminders: Boolean, time: String) {
-        runBlocking {
+    // Сохраняем тему при изменении
+    fun saveTheme(theme: Boolean) {
+        isDarkTheme = theme
+        scope.launch {
             dataStoreManager.saveAllData(
-                habits = viewModel.habits.value,
-                isDarkTheme = dark,
-                remindersEnabled = reminders,
-                reminderTime = time
+                habits = habitViewModel.habits.value,
+                isDarkTheme = theme,
+                remindersEnabled = true,
+                reminderTime = "09:00"
             )
-        }
-    }
-
-    // Сохранение при закрытии приложения
-    DisposableEffect(Unit) {
-        onDispose {
-            runBlocking {
-                dataStoreManager.saveAllData(
-                    habits = viewModel.habits.value,
-                    isDarkTheme = isDarkTheme,
-                    remindersEnabled = remindersEnabled,
-                    reminderTime = reminderTime
-                )
-            }
         }
     }
 
@@ -87,38 +73,49 @@ fun MyApp() {
         val navController = rememberNavController()
 
         Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-            if (isDataLoaded) {
-                NavHost(
-                    navController = navController,
-                    startDestination = Screen.Home.route,
-                    modifier = Modifier.padding(innerPadding)
-                ) {
-                    composable(Screen.Home.route) {
-                        HomeScreen(
-                            viewModel = viewModel,
-                            onNavigateToStatistics = { navController.navigate(Screen.Statistics.route) },
-                            onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
-                        )
-                    }
-                    composable(Screen.Statistics.route) {
-                        StatisticsScreen(
-                            viewModel = viewModel,
-                            onNavigateToHome = { navController.navigate(Screen.Home.route) },
-                            onNavigateToSettings = { navController.navigate(Screen.Settings.route) }
-                        )
-                    }
-                    composable(Screen.Settings.route) {
-                        SettingsScreen(
-                            viewModel = viewModel,
-                            onNavigateToHome = { navController.navigate(Screen.Home.route) },
-                            onNavigateToStatistics = { navController.navigate(Screen.Statistics.route) },
-                            isDarkTheme = isDarkTheme,
-                            onThemeChange = {
-                                isDarkTheme = it
-                                saveSettings(it, remindersEnabled, reminderTime)
-                            }
-                        )
-                    }
+            NavHost(
+                navController = navController,
+                startDestination = Screen.Home.route,
+                modifier = Modifier.padding(innerPadding)
+            ) {
+                composable(Screen.Home.route) {
+                    HomeScreen(
+                        viewModel = habitViewModel,
+                        isDarkTheme = isDarkTheme,
+                        onNavigateToStatistics = {
+                            navController.navigate(Screen.Statistics.route)
+                        },
+                        onNavigateToSettings = {
+                            navController.navigate(Screen.Settings.route)
+                        }
+                    )
+                }
+                composable(Screen.Statistics.route) {
+                    StatisticsScreen(
+                        viewModel = habitViewModel,
+                        isDarkTheme = isDarkTheme,
+                        onNavigateToHome = {
+                            navController.navigate(Screen.Home.route)
+                        },
+                        onNavigateToSettings = {
+                            navController.navigate(Screen.Settings.route)
+                        }
+                    )
+                }
+                composable(Screen.Settings.route) {
+                    SettingsScreen(
+                        viewModel = habitViewModel,
+                        isDarkTheme = isDarkTheme,
+                        onThemeChange = { newTheme ->
+                            saveTheme(newTheme)
+                        },
+                        onNavigateToHome = {
+                            navController.navigate(Screen.Home.route)
+                        },
+                        onNavigateToStatistics = {
+                            navController.navigate(Screen.Statistics.route)
+                        }
+                    )
                 }
             }
         }
@@ -128,5 +125,5 @@ fun MyApp() {
 @Preview(showBackground = true)
 @Composable
 fun MyAppPreview() {
-    MyApp()
+    MyApp(initialTheme = false)
 }
